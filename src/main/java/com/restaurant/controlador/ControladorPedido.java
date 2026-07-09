@@ -23,7 +23,7 @@ public class ControladorPedido {
     @GetMapping("/mesa/{mesaId}")
     public ResponseEntity<ResumenPedidoDTO> obtenerResumen(
             @PathVariable Long mesaId,
-            @RequestHeader(value = "X-Session-Token", required = false) String token) {
+            @RequestHeader("X-Session-Token") String token) {
 
         servicioMesa.validarToken(mesaId, token);
         return ResponseEntity.ok(servicioPedido.obtenerResumenPedido(mesaId));
@@ -48,5 +48,15 @@ public class ControladorPedido {
         servicioMesa.validarToken(mesaId, token);
         servicioPedido.crearPedidoParaMesa(mesaId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PutMapping("/mesa/{mesaId}/cancelar")
+    public ResponseEntity<Void> cancelarPedido(
+            @PathVariable Long mesaId,
+            @RequestHeader("X-Session-Token") String token) {
+
+        servicioMesa.validarToken(mesaId, token);
+        servicioPedido.cancelarPedido(mesaId);
+        return ResponseEntity.ok().build();
     }
 }

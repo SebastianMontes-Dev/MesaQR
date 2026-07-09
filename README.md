@@ -94,6 +94,8 @@ curl http://localhost:8080/api/mesas
 | `GET` | `/api/mesas` | Listar todas las mesas | — |
 | `GET` | `/api/mesas/{id}` | Obtener mesa por ID | — |
 | `GET` | `/api/mesas/{id}/qr` | Obtener QR de la mesa (PNG) | — |
+| `PUT` | `/api/mesas/{id}/reservar` | Reservar una mesa disponible | — |
+| `PUT` | `/api/mesas/{id}/liberar` | Liberar una mesa reservada | — |
 
 **`POST /api/mesas`**
 
@@ -123,6 +125,7 @@ Respuesta `201`:
 | `POST` | `/api/pedidos/mesa/{mesaId}` | Abrir pedido para una mesa | `X-Session-Token` |
 | `POST` | `/api/pedidos/mesa/{mesaId}/items` | Agregar elemento al pedido | `X-Session-Token` |
 | `GET` | `/api/pedidos/mesa/{mesaId}` | Ver resumen del pedido activo | `X-Session-Token` |
+| `PUT` | `/api/pedidos/mesa/{mesaId}/cancelar` | Cancelar pedido activo | `X-Session-Token` |
 
 **`POST /api/pedidos/mesa/1/items`**
 
@@ -152,7 +155,10 @@ Respuesta `201` (vacía). El resumen actualizado se emite por WebSocket.
       "notas": "sin cebolla"
     }
   ],
-  "total": 28000,
+  "subtotal": 28000,
+  "iva": 4480,
+  "propina": 0,
+  "total": 32480,
   "estado": "ABIERTO"
 }
 ```
@@ -177,7 +183,10 @@ Respuesta `201` (vacía). El resumen actualizado se emite por WebSocket.
 {
   "pagoId": 1,
   "estado": "COMPLETADO",
-  "monto": 28000,
+  "subtotal": 28000,
+  "iva": 4480,
+  "propina": 0,
+  "monto": 32480,
   "mensaje": "Pago con tarjeta procesado"
 }
 ```
@@ -341,6 +350,10 @@ src/main/java/com/restaurant/
 | `spring.jpa.hibernate.ddl-auto` | `validate` | Flyway maneja el esquema |
 | `restaurant.name` | `Mi Restaurante` | Nombre mostrado en el menú |
 | `spring.websocket.max-text-message-size` | `8192` | Tamaño máximo de mensaje WebSocket |
+| `restaurant.iva.habilitado` | `true` | Habilitar cálculo de IVA |
+| `restaurant.iva.porcentaje` | `16` | Porcentaje de IVA |
+| `restaurant.propina.habilitada` | `false` | Habilitar cálculo de propina sugerida |
+| `restaurant.propina.porcentaje` | `10` | Porcentaje de propina |
 
 ## Decisiones técnicas
 

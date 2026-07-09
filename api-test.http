@@ -2,6 +2,7 @@
 @baseUrl = http://localhost:8080
 @mesaId = 1
 @token = 6169d447-54d8-4b48-af99-e606f577e0cb
+@pagoId = 1
 
 ### ────────────────────────────────────
 ### 1. CREAR UNA MESA
@@ -33,9 +34,16 @@ GET {{baseUrl}}/api/mesas/{{mesaId}}/qr
 ### 5. VER RESUMEN DEL PEDIDO ACTIVO
 ### ────────────────────────────────────
 GET {{baseUrl}}/api/pedidos/mesa/{{mesaId}}
+X-Session-Token: {{token}}
 
 ### ────────────────────────────────────
-### 6. AGREGAR ITEM AL PEDIDO
+### 6. CREAR PEDIDO PARA UNA MESA
+### ────────────────────────────────────
+POST {{baseUrl}}/api/pedidos/mesa/{{mesaId}}
+X-Session-Token: {{token}}
+
+### ────────────────────────────────────
+### 7. AGREGAR ITEM AL PEDIDO
 ### ────────────────────────────────────
 POST {{baseUrl}}/api/pedidos/mesa/{{mesaId}}/items
 Content-Type: application/json
@@ -48,7 +56,13 @@ X-Session-Token: {{token}}
 }
 
 ### ────────────────────────────────────
-### 7. PROCESAR PAGO
+### 8. CANCELAR PEDIDO
+### ────────────────────────────────────
+PUT {{baseUrl}}/api/pedidos/mesa/{{mesaId}}/cancelar
+X-Session-Token: {{token}}
+
+### ────────────────────────────────────
+### 9. PROCESAR PAGO
 ### ────────────────────────────────────
 POST {{baseUrl}}/api/pagos/mesa/{{mesaId}}
 Content-Type: application/json
@@ -59,6 +73,21 @@ X-Session-Token: {{token}}
 }
 
 ### ────────────────────────────────────
-### 8. VER MENU INTERACTIVO (abre en navegador)
+### 10. CONFIRMAR PAGO EN EFECTIVO
+### ────────────────────────────────────
+POST {{baseUrl}}/api/pagos/{{pagoId}}/confirmar-efectivo
+
+### ────────────────────────────────────
+### 11. RESERVAR MESA
+### ────────────────────────────────────
+PUT {{baseUrl}}/api/mesas/{{mesaId}}/reservar
+
+### ────────────────────────────────────
+### 12. LIBERAR MESA
+### ────────────────────────────────────
+PUT {{baseUrl}}/api/mesas/{{mesaId}}/liberar
+
+### ────────────────────────────────────
+### 13. VER MENU INTERACTIVO (abre en navegador)
 ### ────────────────────────────────────
 GET {{baseUrl}}/menu/{{mesaId}}?token={{token}}

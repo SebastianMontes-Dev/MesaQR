@@ -13,6 +13,9 @@ public class ResumenPedidoDTO {
     private Long pedidoId;
     private Integer numeroDeMesa;
     private List<DetalleElementoDTO> detalles;
+    private BigDecimal subtotal;
+    private BigDecimal iva;
+    private BigDecimal propina;
     private BigDecimal total;
     private EstadoPedido estado;
 }

@@ -45,4 +45,16 @@ public class ControladorMesa {
                 .urlQr(baseUrl + "/api/mesas/" + mesa.getId() + "/qr")
                 .build());
     }
+
+    @PutMapping("/{id}/reservar")
+    public ResponseEntity<Void> reservarMesa(@PathVariable Long id) {
+        servicioMesa.reservarMesa(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/liberar")
+    public ResponseEntity<Void> liberarMesa(@PathVariable Long id) {
+        servicioMesa.liberarMesa(id);
+        return ResponseEntity.ok().build();
+    }
 }

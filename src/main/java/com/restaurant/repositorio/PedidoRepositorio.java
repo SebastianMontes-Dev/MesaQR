@@ -18,6 +18,10 @@ public interface PedidoRepositorio extends JpaRepository<Pedido, Long> {
     @Query("SELECT p FROM Pedido p WHERE p.mesa.id = :mesaId AND p.estado = 'ABIERTO'")
     Optional<Pedido> findActivoByMesaId(@Param("mesaId") Long mesaId);
 
+    @EntityGraph("Pedido.detalles")
+    @Query("SELECT p FROM Pedido p WHERE p.mesa.id = :mesaId AND p.estado = 'ABIERTO'")
+    Optional<Pedido> findActivoByMesaIdSoloLectura(@Param("mesaId") Long mesaId);
+
     Optional<Pedido> findFirstByMesaIdOrderByIdDesc(Long mesaId);
 
     @EntityGraph("Pedido.detalles")

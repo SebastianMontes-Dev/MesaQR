@@ -4,49 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${nombreRestaurante}">Restaurante</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; }
-        .contenedor { max-width: 480px; margin: 0 auto; padding: 16px; }
-        .encabezado { background: #2563eb; color: white; padding: 20px 16px; border-radius: 12px; margin-bottom: 16px; text-align: center; }
-        .encabezado h1 { font-size: 20px; margin-bottom: 4px; }
-        .encabezado .info-mesa { font-size: 14px; opacity: 0.9; }
-
-        .titulo-seccion { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #374151; }
-        .elemento-pedido { display: flex; justify-content: space-between; align-items: center; background: white; padding: 12px; border-radius: 8px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .elemento-pedido .izquierda { flex: 1; }
-        .elemento-pedido .nombre { font-weight: 500; }
-        .elemento-pedido .detalles { font-size: 13px; color: #6b7280; }
-        .elemento-pedido .derecha { text-align: right; }
-        .elemento-pedido .sub-total { font-weight: 600; color: #059669; }
-
-        .barra-total { display: flex; justify-content: space-between; background: white; padding: 16px; border-radius: 8px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .barra-total .etiqueta { font-size: 18px; font-weight: 700; }
-        .barra-total .monto { font-size: 18px; font-weight: 700; color: #2563eb; }
-
-        .estado-vacio { text-align: center; padding: 32px 16px; color: #9ca3af; }
-
-        .seccion-pago { margin-top: 16px; }
-        .grilla-pago { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-pago { background: white; border: 2px solid #e5e7eb; border-radius: 10px; padding: 14px 8px; font-size: 14px; font-weight: 500; cursor: pointer; text-align: center; transition: all 0.15s; }
-        .btn-pago:hover { border-color: #2563eb; color: #2563eb; }
-        .btn-pago:active { background: #eff6ff; }
-
-        .seccion-menu { margin-top: 24px; }
-        .grilla-menu { display: grid; gap: 8px; }
-        .elemento-menu { background: white; border: 2px solid #e5e7eb; border-radius: 10px; padding: 12px; cursor: pointer; transition: all 0.15s; display: flex; justify-content: space-between; align-items: center; }
-        .elemento-menu:hover { border-color: #2563eb; }
-        .elemento-menu .nombre-platillo { font-weight: 500; }
-        .elemento-menu .precio-platillo { color: #2563eb; font-weight: 600; }
-        .elemento-menu .categoria-platillo { font-size: 11px; color: #9ca3af; }
-
-        .badge-estado { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .estado-ABIERTO { background: #dbeafe; color: #1d4ed8; }
-        .estado-PAGADO { background: #d1fae5; color: #059669; }
-
-        .notificacion { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity 0.3s; z-index: 100; }
-        .notificacion.visible { opacity: 1; }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/menu.css}" />
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
 </head>
@@ -112,8 +70,22 @@
         </div>
 
         <div class="barra-total">
-            <span class="etiqueta">TOTAL</span>
-            <span class="monto" th:text="'$' + ${#numbers.formatDecimal(resumen.total, 0, 'COMMA', 3, 'POINT')}">$0</span>
+            <div class="linea-desglose">
+                <span>Subtotal</span>
+                <span th:text="'$' + ${#numbers.formatDecimal(resumen.subtotal, 0, 'COMMA', 3, 'POINT')}">$0</span>
+            </div>
+            <div class="linea-desglose" th:if="${resumen.iva != null and resumen.iva.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                <span>IVA (16%)</span>
+                <span th:text="'$' + ${#numbers.formatDecimal(resumen.iva, 0, 'COMMA', 3, 'POINT')}">$0</span>
+            </div>
+            <div class="linea-desglose" th:if="${resumen.propina != null and resumen.propina.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                <span>Propina (10%)</span>
+                <span th:text="'$' + ${#numbers.formatDecimal(resumen.propina, 0, 'COMMA', 3, 'POINT')}">$0</span>
+            </div>
+            <div class="linea-desglose total-final">
+                <span>TOTAL</span>
+                <span class="monto" th:text="'$' + ${#numbers.formatDecimal(resumen.total, 0, 'COMMA', 3, 'POINT')}">$0</span>
+            </div>
         </div>
 
         <div class="seccion-pago" th:if="${!resumen.detalles.isEmpty()}">
@@ -123,12 +95,13 @@
                 <button class="btn-pago" onclick="pagar('TRANSFERENCIA_QR')">QR Bancario</button>
                 <button class="btn-pago" onclick="pagar('EFECTIVO')">Efectivo</button>
             </div>
+            <button class="btn-cancelar" onclick="cancelarPedido()">Cancelar pedido</button>
         </div>
 
         <div class="seccion-menu">
             <div class="titulo-seccion">Menú</div>
             <div class="grilla-menu">
-                <div th:each="platillo : ${platillos}" class="item-menu"
+                <div th:each="platillo : ${platillos}" class="elemento-menu"
                      th:data-platillo-id="${platillo.id}" th:data-platillo-nombre="${platillo.nombre}"
                       onclick="agregarElemento(parseInt(this.dataset.platilloId), this.dataset.platilloNombre)">
                     <div>
@@ -143,76 +116,10 @@
 
     <div class="notificacion" id="notificacion"></div>
 
-    <script>
+    <script th:inline="javascript">
         const mesaId = [[${mesaId}]];
         const token = '[[${token}]]';
-
-        function encabezadosApi() {
-            return {
-                'Content-Type': 'application/json',
-                'X-Session-Token': token
-            };
-        }
-
-        async function agregarElemento(platilloId, nombre) {
-            mostrarNotificacion('Agregando ' + nombre + '...');
-            const resp = await fetch('/api/pedidos/mesa/' + mesaId + '/items', {
-                method: 'POST',
-                headers: encabezadosApi(),
-                body: JSON.stringify({ platilloId, cantidad: 1 })
-            });
-            if (resp.ok) {
-                mostrarNotificacion(nombre + ' agregado');
-                setTimeout(() => location.reload(), 500);
-            } else {
-                const err = await resp.json();
-                mostrarNotificacion('Error: ' + err.mensaje);
-            }
-        }
-
-        async function pagar(metodo) {
-            if (!confirm('¿Confirmar pago por $' + document.querySelector('.monto').textContent.replace('$','') + '?')) return;
-
-            mostrarNotificacion('Procesando pago...');
-            const resp = await fetch('/api/pagos/mesa/' + mesaId, {
-                method: 'POST',
-                headers: encabezadosApi(),
-                body: JSON.stringify({ metodo, tokenProveedor: 'tok_simulado' })
-            });
-            if (!resp.ok) {
-                const err = await resp.json();
-                mostrarNotificacion('Error: ' + (err.mensaje || 'No se pudo procesar el pago'));
-                return;
-            }
-            const data = await resp.json();
-
-            if (data.estado === 'COMPLETADO') {
-                mostrarNotificacion('¡Pago exitoso! Gracias.');
-                setTimeout(() => location.reload(), 2000);
-            } else if (data.urlRedireccion) {
-                mostrarNotificacion(data.mensaje);
-                setTimeout(() => location.reload(), 3000);
-            } else {
-                mostrarNotificacion('Error: ' + data.mensaje);
-            }
-        }
-
-        function conectarCanalWeb() {
-            const socket = new SockJS('/ws');
-            const cliente = Stomp.over(socket);
-            cliente.connect({'X-Session-Token': token}, () => {
-                cliente.subscribe('/topic/mesas', () => location.reload());
-            });
-        }
-
-        function mostrarNotificacion(msg) {
-            const t = document.getElementById('notificacion');
-            t.textContent = msg;
-            t.classList.add('visible');
-            setTimeout(() => t.classList.remove('visible'), 2500);
-        }
-
-        conectarCanalWeb();
     </script>
+    <script th:src="@{/js/menu.js}"></script>
 </body>
 </html>

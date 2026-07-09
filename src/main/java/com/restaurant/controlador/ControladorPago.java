@@ -25,8 +25,9 @@ public class ControladorPago {
             @RequestHeader("X-Session-Token") String token,
             @Valid @RequestBody SolicitudPagoDTO solicitud) {
 
-        servicioMesa.validarToken(mesaId, token);
-        return ResponseEntity.ok(servicioPago.procesarPago(mesaId, solicitud));
+        Long mesaIdFinal = solicitud.getMesaId() != null ? solicitud.getMesaId() : mesaId;
+        servicioMesa.validarToken(mesaIdFinal, token);
+        return ResponseEntity.ok(servicioPago.procesarPago(mesaIdFinal, solicitud));
     }
 
     @PostMapping("/notificacion-externa")

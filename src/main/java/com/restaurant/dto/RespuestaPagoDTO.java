@@ -11,6 +11,9 @@ import java.math.BigDecimal;
 public class RespuestaPagoDTO {
     private Long pagoId;
     private EstadoPago estado;
+    private BigDecimal subtotal;
+    private BigDecimal iva;
+    private BigDecimal propina;
     private BigDecimal monto;
     private String mensaje;
     private String urlRedireccion;

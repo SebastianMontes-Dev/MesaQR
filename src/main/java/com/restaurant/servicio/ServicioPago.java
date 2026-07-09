@@ -12,7 +12,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.restaurant.excepcion.RecursoNoEncontradoException;
+import com.restaurant.modelo.MetodoPago;
 import java.math.BigDecimal;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 @Slf4j
 @Service
@@ -22,10 +28,16 @@ public class ServicioPago {
     private final PagoRepositorio pagoRepositorio;
     private final ServicioPedido servicioPedido;
 
+    @org.springframework.beans.factory.annotation.Value("${restaurant.webhook.secret:secreto_default}")
+    private String webhookSecret;
+
     @Transactional
     public RespuestaPagoDTO procesarPago(Long mesaId, SolicitudPagoDTO solicitud) {
         Pedido pedido = servicioPedido.obtenerPedidoActivo(mesaId);
-        BigDecimal total = servicioPedido.obtenerTotalPedido(pedido.getId());
+        BigDecimal subtotal = servicioPedido.obtenerTotalPedido(pedido.getId());
+        BigDecimal iva = servicioPedido.calcularIva(subtotal);
+        BigDecimal propina = servicioPedido.calcularPropina(subtotal);
+        BigDecimal total = servicioPedido.calcularTotalConImpuestos(subtotal);
 
         Pago pago = new Pago();
         pago.setPedido(pedido);
@@ -33,14 +45,15 @@ public class ServicioPago {
         pago.setMonto(total);
 
         return switch (solicitud.getMetodo()) {
-            case EFECTIVO -> procesarPagoEfectivo(pago, pedido);
-            case TARJETA -> procesarPagoTarjeta(pago, pedido, solicitud.getTokenProveedor());
-            case TRANSFERENCIA_QR -> procesarPagoTransferenciaQR(pago, pedido);
+            case EFECTIVO -> procesarPagoEfectivo(pago, pedido, subtotal, iva, propina);
+            case TARJETA -> procesarPagoTarjeta(pago, pedido, solicitud.getTokenProveedor(), subtotal, iva, propina);
+            case TRANSFERENCIA_QR -> procesarPagoTransferenciaQR(pago, pedido, subtotal, iva, propina);
             default -> throw new UnsupportedOperationException("Metodo de pago no soportado: " + solicitud.getMetodo());
         };
     }
 
-    private RespuestaPagoDTO procesarPagoEfectivo(Pago pago, Pedido pedido) {
+    private RespuestaPagoDTO procesarPagoEfectivo(Pago pago, Pedido pedido,
+                                                   BigDecimal subtotal, BigDecimal iva, BigDecimal propina) {
         pago.setEstado(EstadoPago.PENDIENTE);
         pagoRepositorio.save(pago);
 
@@ -50,12 +63,16 @@ public class ServicioPago {
         return RespuestaPagoDTO.builder()
                 .pagoId(pago.getId())
                 .estado(EstadoPago.PENDIENTE)
+                .subtotal(subtotal)
+                .iva(iva)
+                .propina(propina)
                 .monto(pago.getMonto())
                 .mensaje("Pago en efectivo solicitado, a la espera de confirmación")
                 .build();
     }
 
-    private RespuestaPagoDTO procesarPagoTarjeta(Pago pago, Pedido pedido, String tokenProveedor) {
+    private RespuestaPagoDTO procesarPagoTarjeta(Pago pago, Pedido pedido, String tokenProveedor,
+                                                  BigDecimal subtotal, BigDecimal iva, BigDecimal propina) {
         pago.setReferenciaProveedor(tokenProveedor);
         pago.setEstado(EstadoPago.COMPLETADO);
         pagoRepositorio.save(pago);
@@ -68,26 +85,32 @@ public class ServicioPago {
         return RespuestaPagoDTO.builder()
                 .pagoId(pago.getId())
                 .estado(EstadoPago.COMPLETADO)
+                .subtotal(subtotal)
+                .iva(iva)
+                .propina(propina)
                 .monto(pago.getMonto())
                 .mensaje("Pago con tarjeta procesado")
                 .build();
     }
 
-    private RespuestaPagoDTO procesarPagoTransferenciaQR(Pago pago, Pedido pedido) {
+    private RespuestaPagoDTO procesarPagoTransferenciaQR(Pago pago, Pedido pedido,
+                                                          BigDecimal subtotal, BigDecimal iva, BigDecimal propina) {
         pago.setEstado(EstadoPago.PENDIENTE);
         pagoRepositorio.save(pago);
 
         return RespuestaPagoDTO.builder()
                 .pagoId(pago.getId())
                 .estado(EstadoPago.PENDIENTE)
+                .subtotal(subtotal)
+                .iva(iva)
+                .propina(propina)
                 .monto(pago.getMonto())
                 .mensaje("Realiza la transferencia QR")
                 .urlRedireccion("/api/pagos/" + pago.getId() + "/confirmar")
                 .build();
     }
 
-    @org.springframework.beans.factory.annotation.Value("${restaurant.webhook.secret:secreto_default}")
-    private String webhookSecret;
+
 
     @Transactional
     public void manejarNotificacionExterna(String payload, String firma) {
@@ -98,10 +121,10 @@ public class ServicioPago {
         }
 
         try {
-            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
-            javax.crypto.spec.SecretKeySpec secretKeySpec = new javax.crypto.spec.SecretKeySpec(webhookSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256");
+            Mac mac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secretKeySpec = new SecretKeySpec(webhookSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             mac.init(secretKeySpec);
-            byte[] hmacBytes = mac.doFinal(payload.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] hmacBytes = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
             
             StringBuilder sb = new StringBuilder();
             for (byte b : hmacBytes) {
@@ -113,7 +136,7 @@ public class ServicioPago {
                 log.error("Firma de webhook inválida. Calculada: {}, Recibida: {}", firmaCalculada, firma);
                 throw new IllegalArgumentException("Firma de webhook inválida");
             }
-        } catch (java.security.NoSuchAlgorithmException | java.security.InvalidKeyException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new RuntimeException("Error al calcular HMAC", e);
         }
 
@@ -124,6 +147,14 @@ public class ServicioPago {
     public RespuestaPagoDTO confirmarPagoQR(Long pagoId) {
         Pago pago = pagoRepositorio.findById(pagoId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Pago no encontrado: " + pagoId));
+
+        if (pago.getMetodo() != MetodoPago.TRANSFERENCIA_QR) {
+            throw new IllegalArgumentException("Este pago no es de tipo transferencia QR");
+        }
+
+        if (pago.getEstado() != EstadoPago.PENDIENTE) {
+            throw new IllegalArgumentException("El pago ya fue procesado o no está pendiente");
+        }
 
         pago.setEstado(EstadoPago.COMPLETADO);
         pagoRepositorio.save(pago);
@@ -145,8 +176,12 @@ public class ServicioPago {
         Pago pago = pagoRepositorio.findById(pagoId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Pago no encontrado: " + pagoId));
 
-        if (pago.getMetodo() != com.restaurant.modelo.MetodoPago.EFECTIVO) {
+        if (pago.getMetodo() != MetodoPago.EFECTIVO) {
             throw new IllegalArgumentException("El pago no es en efectivo");
+        }
+
+        if (pago.getEstado() != EstadoPago.PENDIENTE) {
+            throw new IllegalArgumentException("El pago ya fue procesado o no está pendiente");
         }
 
         pago.setEstado(EstadoPago.COMPLETADO);
