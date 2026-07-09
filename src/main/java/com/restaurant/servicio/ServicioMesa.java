@@ -61,6 +61,8 @@ public class ServicioMesa {
 
         mesaRepositorio.save(mesa);
 
+        log.info("=== TEST INFO === Token de sesion generado para la mesa {}: {}", mesa.getNumeroDeMesa(), token);
+
         return toRespuesta(mesa, baseUrl);
     }
 

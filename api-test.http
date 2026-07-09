@@ -1,7 +1,7 @@
 ### Variables
 @baseUrl = http://localhost:8080
 @mesaId = 1
-@token = 6169d447-54d8-4b48-af99-e606f577e0cb
+@token = 1e95a759-57d2-46ab-9153-86f1d0ef934a
 @pagoId = 1
 
 ### ────────────────────────────────────

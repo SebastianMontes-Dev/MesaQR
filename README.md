@@ -372,12 +372,14 @@ Las migraciones versionadas (`V1` a `V5`) garantizan que cualquier entorno (dev,
 ## Roadmap
 
 - [ ] Integración con pasarela de pago real (Stripe/MercadoPago)
-- [ ] Webhooks para confirmación asíncrona de pagos QR
+- [x] Webhooks para confirmación asíncrona de pagos QR (Endpoint implementado)
+- [x] Métricas con Micrometer + Prometheus
+- [x] Documentación automática con Swagger / OpenAPI 3
+- [x] CI/CD pipeline con GitHub Actions
 - [ ] Panel de administración (dashboard de mesas ocupadas, ventas del día)
 - [ ] Notificaciones push a cocina (WebSocket a tópico `/topic/cocina`)
 - [ ] Autenticación JWT para administradores del restaurante
-- [ ] Tests de integración con Testcontainers
-- [ ] Métricas con Micrometer + Prometheus
+- [ ] Tests de integración con Testcontainers (actualmente H2 en memoria)
 
 ## Contribuir
 
