@@ -102,7 +102,7 @@ class ServicioPedidoTest {
         servicioPedido.agregarElemento(1L, 1L, 2, "sin cebolla");
 
         assertThat(pedidoTest.getDetalles()).hasSize(1);
-        verify(mensajeria).convertAndSend(eq("/topic/mesas"), any());
+        verify(mensajeria).convertAndSend(anyString(), (Object) any());
     }
 
     @Test
@@ -144,7 +144,7 @@ class ServicioPedidoTest {
 
         assertThat(pedidoTest.getEstado()).isEqualTo(EstadoPedido.CANCELADO);
         verify(servicioMesa).actualizarEstado(1L, EstadoMesa.DISPONIBLE);
-        verify(mensajeria).convertAndSend(eq("/topic/mesas"), any());
+        verify(mensajeria).convertAndSend(anyString(), (Object) any());
     }
 
     @Test

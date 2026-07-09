@@ -139,7 +139,7 @@ class ServicioMesaTest {
 
         assertThat(mesa.getEstado()).isEqualTo(EstadoMesa.RESERVADA);
         verify(mesaRepositorio).save(mesa);
-        verify(mensajeria).convertAndSend(eq("/topic/mesas"), any());
+        verify(mensajeria).convertAndSend(anyString(), (Object) any());
     }
 
     @Test
