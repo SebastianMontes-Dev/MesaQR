@@ -31,3 +31,6 @@ application-local.properties
 
 # OS
 Thumbs.db
+
+# Índice local de CodeGraph
+.codegraph/
