@@ -1,0 +1,30 @@
+{
+  "$comment": [
+    "Servidores MCP de MesaQR.",
+    "Los secretos NUNCA van aqui. Se referencian como variables de entorno con la sintaxis ${VAR}",
+    "y se definen en tu .env local (agregalo a .gitignore si no esta).",
+    "",
+    "Para activar un servidor: instala su paquete (se descarga solo via npx/docker la primera vez)",
+    "y define sus variables de entorno. Verifica con: claude mcp list"
+  ],
+
+  "mcpServers": {
+    "postgres": {
+      "$comment": "Consulta el esquema y datos de restaurant_db en vivo. Define POSTGRES_CONNECTION_STRING, ej: postgresql://usuario:password@localhost:5432/restaurant_db",
+      "command": "npx",
+      "args": ["-y", "@henkey/postgres-mcp-server"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${POSTGRES_CONNECTION_STRING}"
+      }
+    },
+
+    "github": {
+      "$comment": "Issues, PRs y CI de GitHub Actions. Requiere Docker y un token de acceso personal de solo lectura. Define GITHUB_PERSONAL_ACCESS_TOKEN en tu .env local.",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    }
+  }
+}
